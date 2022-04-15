@@ -9,27 +9,38 @@ from entities import ENTITIES
 IGNORED_KEYS = ["service"]
 
 
-def find_references(key, value):
-    # 'str' is also a 'Sequence' and must be first
+def scan_references(key, value, path=[]):
     if isinstance(value, str):
         if valid_entity_id(value) and value not in ENTITIES and key not in IGNORED_KEYS:
-            missing_entity_ids.add(value)
+            missing_entity_ids.setdefault(value, set()).add(
+                "/".join(path).replace("/[", "[")
+            )
     elif isinstance(value, Mapping):
         for k, v in value.items():
-            find_references(k, v)
+            path.append(k)
+            scan_references(k, v, path)
+            path.pop()
     elif isinstance(value, Sequence):
-        for v in value:
-            find_references(key, v)
+        for ndx, v in enumerate(value):
+            name = str(ndx)
+            if isinstance(v, Mapping):
+                name = v.get("alias", name)
+                name = v.get("name", name)
+            path.append(f"[{name}]")
+            scan_references(None, v, path)
+            path.pop()
 
 
 domains = {x.split(".")[0] for x in ENTITIES}
-missing_entity_ids = set()
+missing_entity_ids = {}
 
 secrets = load_yaml("../secrets.yaml")
 config = load_yaml("../configuration.yaml", secrets)
 
-for k, v in config.items():
-    find_references(k, v)
+scan_references(None, config)
 
-for entity_id in sorted(missing_entity_ids):
+for entity_id, paths in sorted(missing_entity_ids.items()):
     print(entity_id)
+    for path in paths:
+        print(f"- {path}")
+    print()
