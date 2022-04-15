@@ -21,12 +21,10 @@ def scan_references(key, value, path=[]):
             scan_references(k, v, path)
             path.pop()
     elif isinstance(value, Sequence):
-        for ndx, v in enumerate(value):
-            name = str(ndx)
+        for k, v in enumerate(value):
             if isinstance(v, Mapping):
-                name = v.get("alias", name)
-                name = v.get("name", name)
-            path.append(f"[{name}]")
+                k = v.get("alias", v.get("name", k))
+            path.append(f"[{k}]")
             scan_references(None, v, path)
             path.pop()
 
