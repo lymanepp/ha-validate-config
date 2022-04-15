@@ -12,9 +12,8 @@ IGNORED_KEYS = ["service"]
 def scan_references(key, value, path=[]):
     if isinstance(value, str):
         if valid_entity_id(value) and value not in ENTITIES and key not in IGNORED_KEYS:
-            missing_entity_ids.setdefault(value, set()).add(
-                "/".join(path).replace("/[", "[")
-            )
+            display_path = "/".join(path).replace("/[", "[")
+            missing_entity_ids.setdefault(value, set()).add(display_path)
     elif isinstance(value, Mapping):
         for k, v in value.items():
             path.append(k)
