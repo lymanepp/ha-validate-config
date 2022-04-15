@@ -1,6 +1,7 @@
 """Find references to entities that don't exist."""
 from typing import Mapping, Sequence
 
+from homeassistant.core import valid_entity_id
 from homeassistant.util.yaml import load_yaml
 
 from entities import ENTITIES
@@ -9,12 +10,9 @@ IGNORED_KEYS = ["service"]
 
 
 def find_references(key, value):
-    if key in IGNORED_KEYS:
-        return
     # 'str' is also a 'Sequence' and must be first
     if isinstance(value, str):
-        parts = value.split(".")
-        if len(parts) == 2 and parts[0] in domains and value not in ENTITIES:
+        if valid_entity_id(value) and value not in ENTITIES and key not in IGNORED_KEYS:
             missing_entity_ids.add(value)
     elif isinstance(value, Mapping):
         for k, v in value.items():
